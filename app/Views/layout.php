@@ -47,6 +47,7 @@ if(uri_string()!=""){
 <body>
 
   <?= $this->include('components/header') ?>
+
   <?= $this->include('components/sidebar') ?>
 
   <main id="main" class="main">
@@ -55,15 +56,15 @@ if(uri_string()!=""){
       <h1>Data Tables</h1>
       <nav>
         <ol class="breadcrumb">
-        <li class="breadcrumb-item">Home</li>
-        <?php
-	        if($hlm!="Home"){
+          <li class="breadcrumb-item">Home</li>
+          <?php
+	      if($hlm!="Home"){
 	        ?>
-	      <li class="breadcrumb-item"><?php echo $hlm?></li> 
-	  <?php
-	}
-  ?> 
-</ol>
+	        <li class="breadcrumb-item"><?php echo $hlm?></li> 
+	        <?php
+	      }
+          ?> 
+        </ol>
       </nav>
     </div><!-- End Page Title -->
 
@@ -73,8 +74,8 @@ if(uri_string()!=""){
 
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title"><?php echo $hlm?></h5>
-             <?= $this->renderSection('content') ?>
+            <h5 class="card-title"><?php echo $hlm?></h5>
+            <?= $this->renderSection('content') ?>
             </div>
 
             </div>

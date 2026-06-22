@@ -5,32 +5,37 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
+use App\Models\UserModel;
+
 class AuthController extends BaseController
 {
-   function __construct()
+    protected $userModel;
+
+    function __construct()
     {
     helper('form');
+    $this->userModel = new UserModel();
     }
 
     public function login()
-{
-    if ($this->request->getPost()) {
-        $username = $this->request->getVar('username');
-        $password = $this->request->getVar('password');
+    {
+        if ($this->request->getPost()) {
+            $rules = [
+                'username' => 'required|min_length[6]',
+                'password' => 'required|min_length[7]|numeric',
+            ];
 
-        $dataUser = [
-            'username' => 'Muhammad Saekullah',
-            'password' => 'd5b8cc193a7928ed2a793d7478f8520b',
-            'role'     => 'admin'
-        ]; // passw 123
+            if ($this->validate($rules)) {
+            $username = $this->request->getVar('username' );
+            $password = $this->request->getVar('password');
 
-        if ($username == $dataUser['username']) {
-            if (md5($password) == $dataUser['password']) {
+            $dataUser = $this->userModel ->where(['username' => $username])->first();
+            //$dataUser = ['username' => 'Muhammad Saekullah', 'password' => 'fcea920f7412b5da7be0cf42b8c93759', 'role' => 'admin']; // passw masih 1234567
+            if ($dataUser) {
+	            if (md5($password) == $dataUser['password']) {
                 session()->set([
                     'username' => $dataUser['username'],
                     'role' => $dataUser['role'],
-                    'email' => 'muhammadsaekullah@gmail.com',
-                    'login_time' => date('Y-m-d H:i:s'),
                     'isLoggedIn' => TRUE
                 ]);
 
@@ -44,20 +49,18 @@ class AuthController extends BaseController
             return redirect()->back();
         }
     } else {
+    session()->setFlashdata('failed', $this->validator->listErrors());
+    return redirect()->back();
+    }
+    } else {
         return view('v_login');
     }
-}
-    public function logout()
-    {
+   }
+   
+   public function logout()
+   {
         session()->destroy();
         return redirect()->to('login');
-    }
-    public function profile()
-    {
-        if (!session()->get('isLoggedIn')) {
-            return redirect()->to('/login');
-        }
-
-        return view('v_profile');
-    }
+   }
 }
+

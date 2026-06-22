@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RequestInterface;
-use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\HTTP\ResponseInterface; // <-- 1. PERBAIKAN: Tambahkan baris ini
 use Psr\Log\LoggerInterface;
 
 /**
@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
  *
  * Extend this class in any new controllers:
  * ```
- *     class Home extends BaseController
+ * class Home extends BaseController
  * ```
  *
  * For security, be sure to declare any new methods as protected or private.
@@ -25,7 +25,8 @@ abstract class BaseController extends Controller
      * The creation of dynamic property is deprecated in PHP 8.2.
      */
 
-    // protected $session;
+    protected $session; // <-- PERBAIKAN: Aktifkan property session (hapus tanda //)
+    protected $helpers = ['form', 'url'];
 
     /**
      * @return void
@@ -40,6 +41,6 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
-        // $this->session = service('session');
+        $this->session = service('session'); // <-- PERBAIKAN: Aktifkan session global (hapus tanda //)
     }
 }

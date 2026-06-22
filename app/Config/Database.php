@@ -41,7 +41,7 @@ class Database extends Config
         'compress'     => false,
         'strictOn'     => false,
         'failover'     => [],
-        'port'         => 3306,
+        'port'         => 3307,
         'numberNative' => false,
         'foundRows'    => false,
         'dateFormat'   => [
@@ -179,7 +179,7 @@ class Database extends Config
         'compress'    => false,
         'strictOn'    => true,
         'failover'    => [],
-        'port'        => 3306,
+        'port'        => 3307,
         'foreignKeys' => true,
         'busyTimeout' => 1000,
         'synchronous' => null,
@@ -190,15 +190,5 @@ class Database extends Config
         ],
     ];
 
-    public function __construct()
-    {
-        parent::__construct();
 
-        // Ensure that we always set the database group to 'tests' if
-        // we are currently running an automated test suite, so that
-        // we don't overwrite live data on accident.
-        if (ENVIRONMENT === 'testing') {
-            $this->defaultGroup = 'tests';
-        }
-    }
 }
