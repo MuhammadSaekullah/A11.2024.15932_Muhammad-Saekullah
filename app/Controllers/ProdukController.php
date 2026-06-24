@@ -10,7 +10,7 @@ class ProdukController extends BaseController
 {
     protected $productModel; 
 
-    function __construct()
+    public function __construct()
     {
         $this->productModel = new ProductModel();
     }
@@ -27,15 +27,13 @@ class ProdukController extends BaseController
         $dataFoto = $this->request->getFile('foto');
 
         $dataForm = [
-            'nama' => $this->request->getPost('nama'),
-            'harga' => $this->request->getPost('harga'),
-            'jumlah' => $this->request->getPost('jumlah'),
-            // PERBAIKAN: Mengisi kedua kolom waktu saat data BARU ditambah
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s') 
+            'nama'   => $this->request->getPost('nama'),
+            'harga'  => $this->request->getPost('harga'),
+            'jumlah' => $this->request->getPost('jumlah')
+            // Kolom waktu (created_at & updated_at) otomatis diisi oleh Model
         ];
 
-        if ($dataFoto->isValid()) {
+        if ($dataFoto && $dataFoto->isValid()) {
             $fileName = $dataFoto->getRandomName(); 
             $dataFoto->move('img/', $fileName);
             
@@ -44,7 +42,7 @@ class ProdukController extends BaseController
 
         $this->productModel->insert($dataForm);
 
-        return redirect('produk')->with('success', 'Data Berhasil Ditambah');
+        return redirect()->to('produk')->with('success', 'Data Berhasil Ditambah');
     }     
 
     public function edit($id)
@@ -52,21 +50,20 @@ class ProdukController extends BaseController
         $dataProduk = $this->productModel->find($id);
 
         $dataForm = [
-            'nama' => $this->request->getPost('nama'),
-            'harga' => $this->request->getPost('harga'),
-            'jumlah' => $this->request->getPost('jumlah'),
-            // Saat EDIT, yang diupdate HANYA updated_at (created_at dibiarkan tetap)
-            'updated_at' => date('Y-m-d H:i:s') 
+            'nama'   => $this->request->getPost('nama'),
+            'harga'  => $this->request->getPost('harga'),
+            'jumlah' => $this->request->getPost('jumlah')
+            // Kolom updated_at otomatis diperbarui oleh Model
         ];
 
         if ($this->request->getPost('check') == 1) {
-            if ($dataProduk['foto'] != '' and file_exists("img/" . $dataProduk['foto'] . "")) {
+            if ($dataProduk['foto'] != '' && file_exists("img/" . $dataProduk['foto'])) {
                 unlink("img/" . $dataProduk['foto']);
             }
 
             $dataFoto = $this->request->getFile('foto');
 
-            if ($dataFoto->isValid()) {
+            if ($dataFoto && $dataFoto->isValid()) {
                 $fileName = $dataFoto->getRandomName();
                 $dataFoto->move('img/', $fileName);
                 
@@ -76,14 +73,14 @@ class ProdukController extends BaseController
 
         $this->productModel->update($id, $dataForm);
 
-        return redirect('produk')->with('success', 'Data Berhasil Diubah');
+        return redirect()->to('produk')->with('success', 'Data Berhasil Diubah');
     }
 
     public function delete($id)
     {
-        $dataProduk = $this->productModel->find($id);
+        // Panggilan delete() ini otomatis akan mengisi kolom deleted_at di database Anda
         $this->productModel->delete($id);
 
-        return redirect('produk')->with('success', 'Data Berhasil Dihapus');
+        return redirect()->to('produk')->with('success', 'Data Berhasil Dihapus');
     }
 }
