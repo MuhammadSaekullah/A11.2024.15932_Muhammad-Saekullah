@@ -6,16 +6,19 @@ use CodeIgniter\Model;
 
 class ProductModel extends Model
 {
+    // Nama tabel Anda di database
     protected $table            = 'product'; 
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     
-    // PERBAIKAN: Diubah ke false agar tidak mencari kolom deleted_at
-    protected $useSoftDeletes   = false; 
+    // AKTIFKAN SOFT DELETES: Mengubah data menjadi hapus semu (tidak terhapus permanen)
+    protected $useSoftDeletes   = true; 
     
     protected $protectFields    = true;
-    protected $allowedFields    = ['nama', 'harga', 'jumlah', 'foto']; 
+    
+    // Semua kolom waktu wajib didaftarkan di sini
+    protected $allowedFields    = ['nama', 'harga', 'jumlah', 'foto', 'created_at', 'updated_at', 'deleted_at']; 
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -23,9 +26,9 @@ class ProductModel extends Model
     protected array $casts = [];
     protected array $castHandlers = [];
 
-    // Dates
-    // PERBAIKAN: Diubah ke false agar tidak mencari kolom created_at & updated_at
-    protected $useTimestamps = false; 
+    // Dates (Pengaturan Waktu Otomatis)
+    // AKTIFKAN TIMESTAMPS: Agar CodeIgniter otomatis mengisi created_at, updated_at, dan deleted_at
+    protected $useTimestamps = true; 
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';

@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
-
 use App\Models\ProductModel;
     
 class ProdukController extends BaseController
@@ -16,22 +15,24 @@ class ProdukController extends BaseController
         $this->productModel = new ProductModel();
     }
 
-public function index()
+    public function index()
     {
         return view('produk/index', [
             'products' => $this->productModel->findAll()
         ]);
     }
 
-
-public function create()
+    public function create()
     {
         $dataFoto = $this->request->getFile('foto');
 
         $dataForm = [
             'nama' => $this->request->getPost('nama'),
             'harga' => $this->request->getPost('harga'),
-            'jumlah' => $this->request->getPost('jumlah') 
+            'jumlah' => $this->request->getPost('jumlah'),
+            // PERBAIKAN: Mengisi kedua kolom waktu saat data BARU ditambah
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s') 
         ];
 
         if ($dataFoto->isValid()) {
@@ -46,14 +47,16 @@ public function create()
         return redirect('produk')->with('success', 'Data Berhasil Ditambah');
     }     
 
-public function edit($id)
+    public function edit($id)
     {
         $dataProduk = $this->productModel->find($id);
 
         $dataForm = [
             'nama' => $this->request->getPost('nama'),
             'harga' => $this->request->getPost('harga'),
-            'jumlah' => $this->request->getPost('jumlah') 
+            'jumlah' => $this->request->getPost('jumlah'),
+            // Saat EDIT, yang diupdate HANYA updated_at (created_at dibiarkan tetap)
+            'updated_at' => date('Y-m-d H:i:s') 
         ];
 
         if ($this->request->getPost('check') == 1) {
@@ -76,7 +79,7 @@ public function edit($id)
         return redirect('produk')->with('success', 'Data Berhasil Diubah');
     }
 
-public function delete($id)
+    public function delete($id)
     {
         $dataProduk = $this->productModel->find($id);
         $this->productModel->delete($id);
@@ -84,4 +87,3 @@ public function delete($id)
         return redirect('produk')->with('success', 'Data Berhasil Dihapus');
     }
 }
-
