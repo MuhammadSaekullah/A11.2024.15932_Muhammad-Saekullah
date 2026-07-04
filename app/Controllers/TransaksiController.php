@@ -13,6 +13,23 @@ class TransaksiController extends BaseController
     protected $transactionModel;
     protected $transactionDetailModel;
 
+    // ==== TAMBAHAN: konfigurasi promo (voucher, biaya jasa, free mouse) ====
+    // Daftar kode voucher yang tersedia beserta persentase diskonnya
+    protected $vouchers = [
+        'PROMO2025'  => 0.10, // 10%
+        'PROMO2026'  => 0.15, // 15%
+        'AKHIRTAHUN' => 0.25, // 25%
+    ];
+
+    // Biaya jasa (service fee) dihitung 2% dari subtotal
+    protected $biayaJasaPercent = 0.02;
+
+    // Bonus "Free Mouse" diberikan sebagai potongan tetap
+    // jika subtotal belanja mencapai batas minimum tertentu
+    protected $freeMouseThreshold = 10000000; // minimal Rp10.000.000
+    protected $freeMouseDiscount  = 150000;    // potongan Rp150.000
+    // ==== AKHIR TAMBAHAN ====
+
     public function __construct()
     {
         // Memuat helper bawaan CodeIgniter 4 yang dibutuhkan
@@ -116,6 +133,12 @@ class TransaksiController extends BaseController
             'items'    => $this->cart->contents(),
             'total'    => $this->cart->total(),
             'response' => $response,
+            // ==== TAMBAHAN: kirim data promo ke view ====
+            'vouchers'          => $this->vouchers,
+            'biayaJasaPercent'  => $this->biayaJasaPercent,
+            'freeMouseThreshold'=> $this->freeMouseThreshold,
+            'freeMouseDiscount' => $this->freeMouseDiscount,
+            // ==== AKHIR TAMBAHAN ====
         ];
 
         return view('v_checkout', $data);
@@ -166,6 +189,29 @@ class TransaksiController extends BaseController
     }
 
     /**
+     * ==== TAMBAHAN ====
+     * MENANGANI AJAX: ajax/voucher
+     * Memvalidasi kode voucher yang diketik user di halaman checkout
+     * dan mengembalikan persentase diskonnya secara resmi dari server
+     * (tidak mengandalkan perhitungan di sisi client saja).
+     */
+    public function ajax_voucher()
+    {
+        $kode = strtoupper(trim(
+            $this->request->getGet('kode') ?? $this->request->getPost('kode') ?? ''
+        ));
+
+        $percent = $this->vouchers[$kode] ?? 0;
+
+        return $this->response->setJSON([
+            'valid'   => $percent > 0,
+            'kode'    => $kode,
+            'percent' => $percent
+        ]);
+    }
+    // ==== AKHIR TAMBAHAN ====
+
+    /**
      * MENANGANI POST: buy
      * Menyimpan data transaksi induk dan detail ke dalam database
      */
@@ -187,11 +233,29 @@ class TransaksiController extends BaseController
 
         $ongkir = (int) $this->request->getPost('ongkir');
 
+        // ==== TAMBAHAN: hitung voucher, biaya jasa, dan free mouse ====
+        $kodeVoucher   = strtoupper(trim($this->request->getPost('kode_voucher') ?? ''));
+        $voucherPercent = $this->vouchers[$kodeVoucher] ?? 0;
+
+        $diskonVoucher = (int) round($subtotal * $voucherPercent);
+        $biayaJasa     = (int) round($subtotal * $this->biayaJasaPercent);
+        $freeMouseDiskon = ($subtotal >= $this->freeMouseThreshold) ? $this->freeMouseDiscount : 0;
+
+        $subtotalJasaVoucherMouse = $subtotal - $diskonVoucher + $biayaJasa - $freeMouseDiskon;
+        $grandTotal = $subtotalJasaVoucherMouse + $ongkir;
+        // ==== AKHIR TAMBAHAN ====
+
         $transaction = [
             'username'    => $this->request->getPost('username'),
             'alamat'      => $this->request->getPost('alamat'),
             'ongkir'      => $ongkir,
-            'total_harga' => $subtotal + $ongkir,
+            // ==== TAMBAHAN: field promo (pastikan kolom berikut ada di tabel transaksi) ====
+            'kode_voucher'     => $kodeVoucher ?: null,
+            'diskon_voucher'   => $diskonVoucher,
+            'biaya_jasa'       => $biayaJasa,
+            'free_mouse_diskon'=> $freeMouseDiskon,
+            // ==== AKHIR TAMBAHAN ====
+            'total_harga' => $grandTotal,
             'status'      => 0, 
         ];
 

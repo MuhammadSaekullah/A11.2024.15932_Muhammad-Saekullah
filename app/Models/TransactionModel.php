@@ -12,7 +12,19 @@ class TransactionModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true; //disesuaikan
     protected $protectFields    = true;
-    protected $allowedFields    = ['username', 'total_harga', 'alamat', 'ongkir', 'status']; //disesuaikan
+    protected $allowedFields    = [
+        'username',
+        'total_harga',
+        'alamat',
+        'ongkir',
+        'status',
+        // ==== TAMBAHAN: field promo (kode voucher, diskon, biaya jasa, free mouse) ====
+        'kode_voucher',
+        'diskon_voucher',
+        'biaya_jasa',
+        'free_mouse_diskon',
+        // ==== AKHIR TAMBAHAN ====
+    ]; //disesuaikan
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -43,4 +55,5 @@ class TransactionModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+    
 }

@@ -80,6 +80,35 @@
                                 ]) ?>
                             </div>
 
+                            <!-- ==== TAMBAHAN: Kode Voucher ==== -->
+                            <div class="mb-1">
+                                <label for="kode_voucher" class="form-label text-secondary small fw-bold">Kode Voucher</label>
+                                <?= form_input([
+                                    'name'        => 'kode_voucher',
+                                    'id'          => 'kode_voucher',
+                                    'class'       => 'form-control form-control-sm text-uppercase',
+                                    'placeholder' => 'Contoh: PROMO2026'
+                                ]) ?>
+                            </div>
+                            <div class="mb-4">
+                                <small class="text-muted" id="voucher-hint">
+                                    Tersedia:
+                                    <?php
+                                        $hints = [];
+                                        if (!empty($vouchers) && is_array($vouchers)) {
+                                            foreach ($vouchers as $kode => $percent) {
+                                                $hints[] = esc($kode) . ' (' . (int) ($percent * 100) . '%)';
+                                            }
+                                        }
+                                        echo implode(', ', $hints);
+                                    ?>
+                                </small>
+                                <br>
+                                <small class="text-danger d-none" id="voucher-invalid">Kode voucher tidak ditemukan.</small>
+                                <small class="text-success d-none" id="voucher-valid">Voucher berhasil diterapkan.</small>
+                            </div>
+                            <!-- ==== AKHIR TAMBAHAN ==== -->
+
                             <div class="pt-2">
                                 <button type="submit" class="btn btn-primary rounded-1 btn-sm px-4 fw-medium" style="background-color: #0d6efd; border-color: #0d6efd;">
                                     Buat Pesanan
@@ -125,6 +154,36 @@
                                             <?= number_to_currency($total, 'IDR') ?>
                                         </td>
                                     </tr>
+
+                                    <!-- ==== TAMBAHAN: Diskon Voucher, Biaya Jasa, Free Mouse, Subtotal gabungan ==== -->
+                                    <tr>
+                                        <td colspan="3" class="py-2 text-end text-danger fw-medium" id="label_diskon_voucher">Diskon Voucher</td>
+                                        <td class="py-2 text-end fw-bold text-danger" id="tampil_diskon_voucher">
+                                            -IDR 0
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="3" class="py-2 text-end text-secondary fw-medium">Biaya Jasa</td>
+                                        <td class="py-2 text-end fw-bold text-dark" id="tampil_biaya_jasa">
+                                            IDR 0
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="3" class="py-2 text-end text-success fw-medium">Free Mouse</td>
+                                        <td class="py-2 text-end fw-bold text-success" id="tampil_free_mouse">
+                                            -IDR 0
+                                        </td>
+                                    </tr>
+
+                                    <tr class="border-top">
+                                        <td colspan="3" class="py-2 text-end text-primary fw-medium">Subtotal (+Jasa-Voucher-Free Mouse)</td>
+                                        <td class="py-2 text-end fw-bold text-dark" id="tampil_subtotal_gabungan">
+                                            IDR 0
+                                        </td>
+                                    </tr>
+                                    <!-- ==== AKHIR TAMBAHAN ==== -->
                                     
                                     <tr>
                                         <td colspan="3" class="py-2 text-end text-secondary fw-medium">Ongkir</td>
@@ -134,7 +193,7 @@
                                     </tr>
 
                                     <tr class="border-top">
-                                        <td colspan="3" class="pt-3 text-end text-dark fw-bold fs-6">Total</td>
+                                        <td colspan="3" class="pt-3 text-end text-dark fw-bold fs-6">Grand Total (incl. Ongkir)</td>
                                         <td class="pt-3 text-end text-primary fw-extrabold fs-5" id="total">
                                             IDR 0
                                         </td>
@@ -158,6 +217,14 @@
 <script>
 let ongkir = 0;
 let subtotal = <?= $total ?>;
+
+// ==== TAMBAHAN: konfigurasi promo dikirim dari controller ====
+let vouchers = <?= json_encode($vouchers ?? []) ?>;
+let biayaJasaPercent = <?= json_encode($biayaJasaPercent ?? 0.02) ?>;
+let freeMouseThreshold = <?= json_encode($freeMouseThreshold ?? 10000000) ?>;
+let freeMouseDiscount = <?= json_encode($freeMouseDiscount ?? 150000) ?>;
+let voucherPercent = 0;
+// ==== AKHIR TAMBAHAN ====
 
 $(document).ready(function() {
     hitungTotal();
@@ -231,10 +298,50 @@ $(document).ready(function() {
         ongkir = parseInt($(this).val()) || 0;
         hitungTotal();
     });
+
+    // ==== TAMBAHAN: EVENT SAAT USER MENGISI / MENGUBAH KODE VOUCHER ====
+    $('#kode_voucher').on('input change', function() {
+        let kode = $(this).val().trim().toUpperCase();
+        $('#voucher-invalid').addClass('d-none');
+        $('#voucher-valid').addClass('d-none');
+
+        if (!kode) {
+            voucherPercent = 0;
+            hitungTotal();
+            return;
+        }
+
+        if (vouchers.hasOwnProperty(kode)) {
+            voucherPercent = vouchers[kode];
+            $('#voucher-valid').removeClass('d-none');
+        } else {
+            voucherPercent = 0;
+            $('#voucher-invalid').removeClass('d-none');
+        }
+
+        hitungTotal();
+    });
+    // ==== AKHIR TAMBAHAN ====
 });
 
 function hitungTotal() {
-    let total = subtotal + ongkir;
+    // ==== TAMBAHAN: hitung diskon voucher, biaya jasa, dan free mouse ====
+    let diskonVoucher = Math.round(subtotal * voucherPercent);
+    let biayaJasa = Math.round(subtotal * biayaJasaPercent);
+    let freeMouse = (subtotal >= freeMouseThreshold) ? freeMouseDiscount : 0;
+    let subtotalGabungan = subtotal - diskonVoucher + biayaJasa - freeMouse;
+    let total = subtotalGabungan + ongkir;
+
+    let labelDiskon = voucherPercent > 0
+        ? `Diskon Voucher (${Math.round(voucherPercent * 100)}%)`
+        : 'Diskon Voucher';
+    $('#label_diskon_voucher').text(labelDiskon);
+
+    $('#tampil_diskon_voucher').text(`-IDR ${diskonVoucher.toLocaleString('id-ID')}`);
+    $('#tampil_biaya_jasa').text(`IDR ${biayaJasa.toLocaleString('id-ID')}`);
+    $('#tampil_free_mouse').text(`-IDR ${freeMouse.toLocaleString('id-ID')}`);
+    $('#tampil_subtotal_gabungan').text(`IDR ${subtotalGabungan.toLocaleString('id-ID')}`);
+    // ==== AKHIR TAMBAHAN ====
 
     $("#ongkir").val(ongkir);
     $("#tampil_ongkir").text(`IDR ${ongkir.toLocaleString('id-ID')}`);

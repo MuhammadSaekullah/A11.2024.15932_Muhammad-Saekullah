@@ -24,7 +24,6 @@ $routes->group('produk', ['filter' => 'auth'], function ($routes) {
 
 $routes->group('keranjang', ['filter' => 'auth'], function ($routes) {
     $routes->get('', 'TransaksiController::index');
-    // PERBAIKAN: Berikan nama endpoint 'add' yang jelas di dalam grup
     $routes->post('add', 'TransaksiController::cart_add');
     $routes->post('edit', 'TransaksiController::cart_edit');
     $routes->get('delete/(:any)', 'TransaksiController::cart_delete/$1');

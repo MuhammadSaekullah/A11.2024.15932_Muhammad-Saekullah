@@ -80,7 +80,54 @@ History Transaksi Pembelian <strong><?= $username ?></strong>
                                 <hr>
                             <?php endforeach; ?>
                         <?php endif; ?>
-                        Ongkir <?= number_to_currency($item['ongkir'], 'IDR') ?>
+
+                        <!-- ==== TAMBAHAN: breakdown voucher, biaya jasa, free mouse, dan grand total ==== -->
+                        <?php
+                            // Hitung ulang subtotal barang dari daftar produk transaksi ini
+                            $subtotalBarang = 0;
+                            if (!empty($products[$item['id']])) {
+                                foreach ($products[$item['id']] as $p) {
+                                    $subtotalBarang += $p['subtotal_harga'];
+                                }
+                            }
+                        ?>
+                        <div class="d-flex justify-content-between">
+                            <span>Subtotal Barang</span>
+                            <span><?= number_to_currency($subtotalBarang, 'IDR') ?></span>
+                        </div>
+
+                        <?php if (!empty($item['kode_voucher'])) : ?>
+                            <div class="d-flex justify-content-between text-danger">
+                                <span>Diskon Voucher (<?= esc($item['kode_voucher']) ?>)</span>
+                                <span>-<?= number_to_currency($item['diskon_voucher'] ?? 0, 'IDR') ?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($item['biaya_jasa'])) : ?>
+                            <div class="d-flex justify-content-between">
+                                <span>Biaya Jasa</span>
+                                <span><?= number_to_currency($item['biaya_jasa'], 'IDR') ?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($item['free_mouse_diskon'])) : ?>
+                            <div class="d-flex justify-content-between text-success">
+                                <span>Free Mouse</span>
+                                <span>-<?= number_to_currency($item['free_mouse_diskon'], 'IDR') ?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="d-flex justify-content-between">
+                            <span>Ongkir</span>
+                            <span><?= number_to_currency($item['ongkir'], 'IDR') ?></span>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Grand Total</span>
+                            <span><?= number_to_currency($item['total_harga'], 'IDR') ?></span>
+                        </div>
+
                     </div>
                 </div>
             </div>
